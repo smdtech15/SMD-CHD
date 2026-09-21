@@ -2,7 +2,9 @@
 
 ## Overview
 
-**SMD Computer Health Device (SMD-CHD)** is a safe, local-only Windows 10/11 diagnostic tool written in Windows PowerShell. It collects read-only health information and presents status results, a conservative overall health score, local logs, and an HTML report.
+**SMD Computer Health Device (SMD-CHD)** is a safe, local-only Windows 10/11 diagnostic tool written in Windows PowerShell. It collects read-only health information and presents status results, a health score, and a detailed HTML report for easy review.
+
+This project is designed to help users, ICT students, and technicians perform quick, non-destructive checks on a computer's overall condition.
 
 ## Features
 
@@ -46,7 +48,7 @@ SMD-CHD/
 ├── run.bat                   # Windows launcher
 ├── src/
 │   ├── SMD-CHD.ps1          # Main launcher, menu, results, and HTML report
-│   └── modules/
+│   └─�� modules/
 │       ├── CPU.ps1          # CPU diagnostics
 │       ├── RAM.ps1           # Memory diagnostics
 │       ├── Storage.ps1       # Disk diagnostics
@@ -76,9 +78,9 @@ SMD-CHD/
 
 ## GPU Diagnostics
 
-SMD-CHD queries the built-in `Win32_VideoController` CIM class. This includes integrated GPUs and dedicated GPUs without requiring third-party software. Multiple adapters are enumerated when present, including common Intel UHD/Iris, AMD integrated/dedicated, and NVIDIA hardware.
+SMD-CHD queries the built-in `Win32_VideoController` CIM class. This includes integrated GPUs and dedicated GPUs without requiring third-party software. Multiple adapters are enumerated when present.
 
-For each adapter, the GPU check reports the name, reported adapter RAM/VRAM when available, driver version, driver date, and Windows device configuration code. A detected adapter with configuration code `0` is **PASS**. Non-zero Windows device codes are reported as **WARNING** or **CRITICAL** according to severity. If Windows cannot return GPU information, SMD-CHD returns a safe **INFO** result rather than crashing or claiming that an integrated GPU is missing.
+For each adapter, the GPU check reports the name, reported adapter RAM/VRAM when available, driver version, driver date, and Windows device configuration code. A detected adapter with configuration issues may be displayed as `WARNING` or `CRITICAL` to help identify hardware or driver problems.
 
 ## Health Score
 
@@ -93,11 +95,11 @@ Overall score interpretation: **90-100 Excellent**, **75-89 Good**, **50-74 Need
 
 ## Reports and Safety
 
-HTML reports are saved in `reports/` as `SMD-CHD-Report_YYYYMMDD_HHmmss.html`. SMD-CHD is read-only: it does not modify GPU drivers, install or remove drivers, change Windows settings, edit the registry, overclock GPUs, change power settings, or delete files.
+HTML reports are saved in `reports/` as `SMD-CHD-Report_YYYYMMDD_HHmmss.html`. SMD-CHD is read-only: it does not modify GPU drivers, install or remove drivers, change Windows settings, edit the registry, or alter system configuration.
 
 ## Testing on Windows 10
 
-From the repository folder, run `run.bat`. Select **9** for the standalone GPU check, then select **1** for a full check and **10** to generate the report. Confirm that the GPU row appears in the report and that integrated graphics such as Intel UHD/Iris are detected. For a non-interactive module check, run:
+From the repository folder, run `run.bat`. Select **9** for the standalone GPU check, then select **1** for a full check and **10** to generate the report. Confirm that the GPU row appears in the generated HTML report.
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ". .\src\modules\GPU.ps1; Get-GPUHealth | Format-List"
