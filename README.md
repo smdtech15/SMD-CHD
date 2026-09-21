@@ -2,44 +2,36 @@
 
 ## Overview
 
-**SMD Computer Health Device (SMD-CHD)** is a professional, lightweight Windows system diagnostics and health monitoring tool designed for Windows 10/11. It provides comprehensive computer health assessments without making any destructive changes to your system.
+**SMD Computer Health Device (SMD-CHD)** is a safe, local-only Windows 10/11 diagnostic tool written in Windows PowerShell. It collects read-only health information and presents status results, a conservative overall health score, local logs, and an HTML report.
 
 ## Features
 
-- **CPU Diagnostics**: Real-time CPU usage, core count, logical processors
-- **RAM Diagnostics**: Memory usage, available RAM, total RAM analysis
-- **Storage Diagnostics**: Disk space analysis for all logical drives
-- **Network Testing**: Internet connectivity, DNS resolution, gateway information
-- **Windows System Info**: OS version, build number, architecture, uptime
-- **Security Status**: Microsoft Defender status and real-time protection state
-- **Hardware Inventory**: Complete computer hardware and software information
-- **Health Score**: Automatic calculation of overall system health (0-100)
-- **Professional HTML Report**: Beautiful, detailed health reports saved locally
-- **Local Logging**: All diagnostics logged for audit and history
-- **Safe Operation**: Zero destructive changes, read-only diagnostics only
+- **CPU Diagnostics**: CPU model, cores, logical processors, and current usage
+- **RAM Diagnostics**: total, used, available memory, and usage percentage
+- **Storage Diagnostics**: capacity, free space, and usage for logical drives
+- **GPU Diagnostics (Version 1.1)**: integrated and dedicated GPU detection, including Intel UHD/Iris, AMD, and NVIDIA adapters
+- **GPU Driver Information**: adapter RAM/reporting, driver version, and driver date
+- **GPU Device Status**: Windows `ConfigManagerErrorCode` checking for each detected GPU
+- **Network Testing**: local network, gateway, internet, and DNS checks
+- **Windows System Info**: OS version, build, architecture, uptime, and services
+- **Security Status**: Microsoft Defender and real-time protection state
+- **Hardware Inventory**: computer, CPU, RAM, network, and system information
+- **Health Score**: conservative 0-100 score including GPU status
+- **Professional HTML Report**: local diagnostic results with a GPU row
+- **Safe Operation**: read-only diagnostics only; no driver or system changes
 
 ## System Requirements
 
 - **OS**: Windows 10 or Windows 11
-- **PowerShell**: Version 5.1 or higher (built-in on Windows 10/11)
-- **Permissions**: Standard user (admin recommended for full diagnostic access)
-- **.NET Framework**: 4.5+ (included with Windows 10/11)
+- **PowerShell**: Version 5.1 or higher
+- **Permissions**: Standard user; administrator is optional for broader diagnostic access
+- **Dependencies**: Built-in Windows PowerShell, CIM/WMI, and Windows networking/security cmdlets only
 
-## Installation
+## Installation and Quick Start
 
-1. Clone or download this repository
-2. Extract the files to a folder (e.g., `C:\Tools\SMD-CHD`)
-3. Run the launcher script
-
-## Quick Start
-
-### Option 1: Using the Batch Launcher (Recommended)
-
-```batch
-run.bat
-```
-
-### Option 2: Direct PowerShell
+1. Clone or download this repository.
+2. Extract it to a folder such as `C:\Tools\SMD-CHD`.
+3. Run `run.bat`, or execute the PowerShell launcher:
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
@@ -50,170 +42,73 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 ```
 SMD-CHD/
-├── README.md                 # This file
-├── run.bat                   # Windows batch launcher
+├── README.md                 # Documentation
+├── run.bat                   # Windows launcher
 ├── src/
-│   ├── SMD-CHD.ps1          # Main launcher and menu system
+│   ├── SMD-CHD.ps1          # Main launcher, menu, results, and HTML report
 │   └── modules/
-│       ├── CPU.ps1          # CPU diagnostics module
-│       ├── RAM.ps1          # RAM diagnostics module
-│       ├── Storage.ps1      # Storage/disk diagnostics module
-│       ├── Network.ps1      # Network and Internet testing module
-│       ├── Windows.ps1      # Windows system information module
-│       ├── Security.ps1     # Microsoft Defender status module
-│       ├── Inventory.ps1    # Hardware and software inventory module
-│       └── HealthScore.ps1  # Health score calculation module
-├── reports/                 # Generated HTML reports stored here
-└── logs/                    # Diagnostic logs stored here
+│       ├── CPU.ps1          # CPU diagnostics
+│       ├── RAM.ps1           # Memory diagnostics
+│       ├── Storage.ps1       # Disk diagnostics
+│       ├── Network.ps1       # Network and internet checks
+│       ├── Windows.ps1       # Windows system diagnostics
+│       ├── Security.ps1      # Microsoft Defender status
+│       ├── Inventory.ps1     # Hardware and software inventory
+│       ├── GPU.ps1           # Integrated/dedicated GPU diagnostics
+│       └── HealthScore.ps1   # Overall score calculation
+├── reports/                  # Generated HTML reports
+└── logs/                     # Diagnostic logs
 ```
 
 ## Menu Options
 
-1. **Full Computer Health Check** - Run all diagnostics and generate health score
-2. **CPU Check** - Detailed CPU diagnostics
-3. **RAM Check** - Detailed RAM diagnostics
-4. **Storage Check** - Detailed disk space analysis
-5. **Network Check** - Internet and DNS connectivity testing
-6. **Windows Check** - Windows OS and system information
-7. **Security Check** - Microsoft Defender and antivirus status
-8. **Computer Inventory** - Complete hardware and software inventory
-9. **Generate Health Report** - Create professional HTML report
-0. **Exit** - Close the application
+1. **Full Computer Health Check** - Run every diagnostic, including GPU, and calculate the score
+2. **CPU Check**
+3. **RAM Check**
+4. **Storage Check**
+5. **Network Check**
+6. **Windows Check**
+7. **Security Check**
+8. **Computer Inventory**
+9. **GPU Check** - Display all detected adapters and device/driver details
+10. **Generate Health Report**
+0. **Exit**
 
-## Health Score Interpretation
+## GPU Diagnostics
 
-- **90-100 (Excellent)**: System is operating optimally
-- **75-89 (Good)**: System is healthy with minor issues
-- **50-74 (Needs Attention)**: System has notable issues requiring attention
-- **0-49 (Critical)**: System has critical issues requiring immediate action
+SMD-CHD queries the built-in `Win32_VideoController` CIM class. This includes integrated GPUs and dedicated GPUs without requiring third-party software. Multiple adapters are enumerated when present, including common Intel UHD/Iris, AMD integrated/dedicated, and NVIDIA hardware.
 
-## Output Files
+For each adapter, the GPU check reports the name, reported adapter RAM/VRAM when available, driver version, driver date, and Windows device configuration code. A detected adapter with configuration code `0` is **PASS**. Non-zero Windows device codes are reported as **WARNING** or **CRITICAL** according to severity. If Windows cannot return GPU information, SMD-CHD returns a safe **INFO** result rather than crashing or claiming that an integrated GPU is missing.
 
-### Reports
-HTML reports are saved in the `reports/` folder with naming format:
-```
-SMD-CHD-Report_YYYYMMDD_HHmmss.html
-```
+## Health Score
 
-### Logs
-Diagnostic logs are saved in the `logs/` folder with naming format:
-```
-SMD-CHD-Log_YYYYMMDD_HHmmss.txt
-```
+The score starts at 100. CPU, RAM, storage, network, and security deductions remain unchanged. GPU issues are deliberately conservative:
 
-## Safety
+- **PASS**: no deduction
+- **WARNING**: 4-point deduction
+- **CRITICAL**: 10-point deduction
+- **INFO**: no deduction
 
-✅ **SMD-CHD is completely safe:**
-- Read-only operations only
-- No files are deleted
-- No system settings are modified
-- No registry changes
-- No drivers installed/uninstalled
-- No destructive commands
+Overall score interpretation: **90-100 Excellent**, **75-89 Good**, **50-74 Needs Attention**, and **0-49 Critical**.
 
-## Troubleshooting
+## Reports and Safety
 
-### "Execution Policy" Error
+HTML reports are saved in `reports/` as `SMD-CHD-Report_YYYYMMDD_HHmmss.html`. SMD-CHD is read-only: it does not modify GPU drivers, install or remove drivers, change Windows settings, edit the registry, overclock GPUs, change power settings, or delete files.
 
-If you see an execution policy error, run this command:
+## Testing on Windows 10
+
+From the repository folder, run `run.bat`. Select **9** for the standalone GPU check, then select **1** for a full check and **10** to generate the report. Confirm that the GPU row appears in the report and that integrated graphics such as Intel UHD/Iris are detected. For a non-interactive module check, run:
 
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ". .\src\modules\GPU.ps1; Get-GPUHealth | Format-List"
 ```
 
-This applies only to the current PowerShell session and doesn't make permanent changes.
-
-### Missing Administrator Rights
-
-Some security features require administrator access. If you see warnings:
-1. Right-click Command Prompt or PowerShell
-2. Select "Run as Administrator"
-3. Navigate to the script folder and run it again
-
-### Microsoft Defender Not Detected
-
-If Defender status cannot be read, you may have a third-party antivirus. The tool will note this in the security check results.
-
-## Features in Detail
-
-### CPU Diagnostics
-- Processor model and specifications
-- Number of physical cores and logical processors
-- Current CPU usage percentage
-- Status warnings for high usage (>75%)
-- Critical alerts for very high usage (>90%)
-
-### RAM Diagnostics
-- Total system RAM in GB
-- Currently used RAM
-- Available/free RAM
-- Usage percentage
-- Status warnings for high memory consumption
-
-### Storage Diagnostics
-- All logical drives (C:, D:, etc.)
-- Total capacity per drive
-- Free space per drive
-- Used space and percentage
-- Alerts for drives over 85% full (warning) or 95% full (critical)
-
-### Network Testing
-- Local IPv4 address
-- Default gateway
-- Internet connectivity test (ping to 8.8.8.8)
-- DNS resolution test
-- Network adapter information
-
-### Windows Information
-- Windows version and edition
-- Build number
-- System architecture (32-bit or 64-bit)
-- System uptime
-- Key Windows services status
-
-### Security Status
-- Microsoft Defender enabled/disabled status
-- Real-time protection state
-- Last antivirus signature update time
-- Note about alternative antivirus if Defender unavailable
-
-### Hardware Inventory
-- Computer name
-- Windows version
-- CPU model
-- Total RAM
-- Installed network adapters
-- Current IP address
-- System uptime
-
-### Health Score
-Automatically calculated based on:
-- CPU usage levels
-- RAM usage levels
-- Storage space availability
-- Network connectivity
-- Windows service status
-- Security protection status
-
-Each issue found reduces the score with appropriate deductions.
-
-## Logs and Reports
-
-All diagnostic results are automatically logged for audit and troubleshooting. Reports can be shared with IT support or used for system documentation.
-
-## Support and Issues
-
-For issues, questions, or feature requests, please open an issue on GitHub.
-
-## License
-
-This project is provided as-is for diagnostic and monitoring purposes.
+The command should return `Status`, `Summary`, and `Details` without changing the system.
 
 ## Version
 
-**Current Version**: 1.0.0
-**Release Date**: 2026
-**Platform**: Windows 10/11
+**Current Version**: 1.1.0  
+**Platform**: Windows 10/11  
 **PowerShell**: 5.1+
 
 ---

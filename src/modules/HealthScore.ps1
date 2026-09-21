@@ -53,6 +53,18 @@ function Get-HealthScore {
         $recommendations += 'Real-time protection may be disabled. Enable Microsoft Defender immediately.'
     }
 
+    # GPU is intentionally weighted conservatively so a display adapter issue does not
+    # dominate the overall computer health score.
+    if ($Results.GPU) {
+        if ($Results.GPU.Status -eq 'CRITICAL') {
+            $score -= 10
+            $recommendations += 'A GPU reports a serious device problem. Review the GPU device status and driver information.'
+        } elseif ($Results.GPU.Status -eq 'WARNING') {
+            $score -= 4
+            $recommendations += 'A GPU reports a device configuration warning. Review Windows device status.'
+        }
+    }
+
     # Ensure score is within valid range
     if ($score -lt 0) {
         $score = 0
