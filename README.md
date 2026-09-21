@@ -1,118 +1,152 @@
-# SMD-CHD - SMD Computer Health Device
+# SMD-CHD — SMD Computer Health Device
 
-## Overview
+**Version 1.4.0 — Professional diagnostic foundation**
 
-**SMD Computer Health Device (SMD-CHD)** is a safe, local-only Windows 10/11 diagnostic tool written in Windows PowerShell. It collects read-only health information and presents status results, a health score, and a detailed HTML report for easy review.
+SMD-CHD is a Windows PowerShell 5.1+ computer health diagnostic tool for individual users, ICT students, technicians, repair shops, schools, and small businesses. It performs local, read-only checks and produces a printable SMD Service Report.
 
-This project is designed to help users, ICT students, and technicians perform quick, non-destructive checks on a computer's overall condition.
+## Vision
 
-## Features
+Build a trustworthy, useful diagnostic product before introducing paid capabilities. SMD-CHD is local-first: it does not upload results, collect credentials, or perform destructive maintenance.
 
-- **CPU Diagnostics**: CPU model, cores, logical processors, and current usage
-- **RAM Diagnostics**: total, used, available memory, and usage percentage
-- **Storage Diagnostics**: capacity, free space, and usage for logical drives
-- **GPU Diagnostics (Version 1.1)**: integrated and dedicated GPU detection, including Intel UHD/Iris, AMD, and NVIDIA adapters
-- **GPU Driver Information**: adapter RAM/reporting, driver version, and driver date
-- **GPU Device Status**: Windows `ConfigManagerErrorCode` checking for each detected GPU
-- **Network Testing**: local network, gateway, internet, and DNS checks
-- **Windows System Info**: OS version, build, architecture, uptime, and services
-- **Security Status**: Microsoft Defender and real-time protection state
-- **Hardware Inventory**: computer, CPU, RAM, network, and system information
-- **Health Score**: conservative 0-100 score including GPU status
-- **Professional HTML Report**: local diagnostic results with a GPU row
-- **Safe Operation**: read-only diagnostics only; no driver or system changes
+## Version 1.4.0 features
 
-## System Requirements
+- CPU, RAM, storage, network, Windows, security, inventory, and GPU diagnostics
+- Safe battery diagnostics with desktop-aware `INFO` handling
+- Thermal diagnostics that never invent temperature values
+- Advanced storage information where Windows exposes it, including model/type and physical health
+- Transparent 0–100 Health Score for CPU, RAM, Storage, Network, Windows, Security, GPU, Battery, and Thermal
+- Real-result recommendations, warnings, and critical issues
+- Local diagnostic history and health trend
+- Optional Technician Mode fields and a printable **SMD SERVICE REPORT**
+- Unique local report IDs and informational maintenance checklist
+- Planned Free/Pro architecture without fake payment processing
 
-- **OS**: Windows 10 or Windows 11
-- **PowerShell**: Version 5.1 or higher
-- **Permissions**: Standard user; administrator is optional for broader diagnostic access
-- **Dependencies**: Built-in Windows PowerShell, CIM/WMI, and Windows networking/security cmdlets only
+## Requirements
 
-## Installation and Quick Start
+- Windows 10 or Windows 11
+- Windows PowerShell 5.1 or newer
+- Standard user is sufficient; some CIM/Defender data may require additional permissions
+- No third-party dependencies
 
-1. Clone or download this repository.
-2. Extract it to a folder such as `C:\Tools\SMD-CHD`.
-3. Run `run.bat`, or execute the PowerShell launcher:
+## Installation and usage
+
+1. Clone or download the repository.
+2. Open the repository folder.
+3. Run `run.bat`, or use:
 
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+Set-ExecutionPolicy -Scope Process Bypass -Force
 .\src\SMD-CHD.ps1
 ```
 
-## Project Structure
+### Menu
 
+```text
+[1] Full Computer Health Check       [10] Battery Health
+[2] CPU Check                         [11] Thermal Check
+[3] RAM Check                         [12] Health Recommendations
+[4] Storage Check                     [13] Diagnostic History
+[5] Network Check                     [14] Technician / Service Report
+[6] Windows Check                     [15] Generate Professional HTML Report
+[7] Security Check                    [0] Exit
+[8] Computer Inventory
+[9] GPU Check
 ```
+
+Option 1 runs CPU, RAM, Storage, Network, Windows, Security, Inventory, GPU, Battery, and Thermal, then calculates the score, saves local history, and displays trend information. Option 14 collects optional customer/device/technician/job/note fields; it never automatically collects personal information.
+
+## Project structure
+
+```text
 SMD-CHD/
-├── README.md                 # Documentation
-├── run.bat                   # Windows launcher
+├── README.md
+├── run.bat
 ├── src/
-│   ├── SMD-CHD.ps1          # Main launcher, menu, results, and HTML report
-│   └─�� modules/
-│       ├── CPU.ps1          # CPU diagnostics
-│       ├── RAM.ps1           # Memory diagnostics
-│       ├── Storage.ps1       # Disk diagnostics
-│       ├── Network.ps1       # Network and internet checks
-│       ├── Windows.ps1       # Windows system diagnostics
-│       ├── Security.ps1      # Microsoft Defender status
-│       ├── Inventory.ps1     # Hardware and software inventory
-│       ├── GPU.ps1           # Integrated/dedicated GPU diagnostics
-│       └── HealthScore.ps1   # Overall score calculation
-├── reports/                  # Generated HTML reports
-└── logs/                     # Diagnostic logs
+│   ├── SMD-CHD.ps1
+│   └── modules/
+│       ├── CPU.ps1
+│       ├── RAM.ps1
+│       ├── Storage.ps1
+│       ├── Network.ps1
+│       ├── Windows.ps1
+│       ├── Security.ps1
+│       ├── Inventory.ps1
+│       ├── GPU.ps1
+│       ├── Battery.ps1
+│       ├── Thermal.ps1
+│       ├── HealthScore.ps1
+│       ├── Recommendations.ps1
+│       └── History.ps1
+├── reports/                         # Local generated HTML reports
+└── logs/history/                    # Local JSON diagnostic summaries
 ```
 
-## Menu Options
+## Diagnostics and limitations
 
-1. **Full Computer Health Check** - Run every diagnostic, including GPU, and calculate the score
-2. **CPU Check**
-3. **RAM Check**
-4. **Storage Check**
-5. **Network Check**
-6. **Windows Check**
-7. **Security Check**
-8. **Computer Inventory**
-9. **GPU Check** - Display all detected adapters and device/driver details
-10. **Generate Health Report**
-0. **Exit**
+### Health Score
 
-## GPU Diagnostics
+The score starts at 100. Only `WARNING` and `CRITICAL` results deduct points. `INFO` results, including a desktop with no battery or hardware without temperature sensors, receive no deduction. The categories and conservative weights are exposed in `HealthScore.ps1`; the report lists every category status.
 
-SMD-CHD queries the built-in `Win32_VideoController` CIM class. This includes integrated GPUs and dedicated GPUs without requiring third-party software. Multiple adapters are enumerated when present.
+Status bands are **90–100 Excellent**, **75–89 Good**, **50–74 Needs Attention**, and **0–49 Critical**.
 
-For each adapter, the GPU check reports the name, reported adapter RAM/VRAM when available, driver version, driver date, and Windows device configuration code. A detected adapter with configuration issues may be displayed as `WARNING` or `CRITICAL` to help identify hardware or driver problems.
+### Battery
 
-## Health Score
+SMD-CHD reads Windows battery/CIM data and uses Full Charge Capacity ÷ Design Capacity × 100 when both values exist. Cycle count and charging state are shown only when Windows exposes them. A desktop reports `INFO — No battery detected. Desktop computer.` Battery values are never fabricated.
 
-The score starts at 100. CPU, RAM, storage, network, and security deductions remain unchanged. GPU issues are deliberately conservative:
+### Thermal
 
-- **PASS**: no deduction
-- **WARNING**: 4-point deduction
-- **CRITICAL**: 10-point deduction
-- **INFO**: no deduction
+Windows hardware exposes thermal sensors inconsistently. SMD-CHD reads available ACPI thermal zones and reports `INFO — Temperature data unavailable through this hardware interface.` when none are available. It does not display fake CPU or GPU temperatures.
 
-Overall score interpretation: **90-100 Excellent**, **75-89 Good**, **50-74 Needs Attention**, and **0-49 Critical**.
+### Storage and GPU
 
-## Reports and Safety
+Storage retains logical-drive capacity/free-space checks and adds read-only model/type and physical health information where built-in Windows interfaces provide it. SMART/physical health may be unavailable. GPU checks enumerate Windows video controllers, device status, driver information, and continue when incomplete.
 
-HTML reports are saved in `reports/` as `SMD-CHD-Report_YYYYMMDD_HHmmss.html`. SMD-CHD is read-only: it does not modify GPU drivers, install or remove drivers, change Windows settings, edit the registry, or alter system configuration.
+### Recommendations and history
 
-## Testing on Windows 10
+Recommendations are created only from actual `WARNING` or `CRITICAL` diagnostic results. History is stored locally as JSON under `logs/history/`; no telemetry or cloud service is used. Trend output is omitted in favor of `INFO — No previous diagnostic available.` until a previous diagnostic exists.
 
-From the repository folder, run `run.bat`. Select **9** for the standalone GPU check, then select **1** for a full check and **10** to generate the report. Confirm that the GPU row appears in the generated HTML report.
+## SMD Service Report
+
+Reports are saved in `reports/` and include SMD branding, Version 1.4.0, report ID, date, computer, optional service fields, score/status, all diagnostic categories, problems, recommendations, checklist, trend, and notes. Reports are printable and responsive for desktop/mobile browsers.
+
+## Free and planned Pro architecture
+
+### SMD-CHD FREE
+
+The current product provides CPU, RAM, storage, network, Windows, basic GPU, basic security, inventory, and health score capabilities without artificial feature locks.
+
+### PLANNED SMD-CHD PRO
+
+Potential future value includes professional customer reports, advanced storage diagnostics, battery and thermal diagnostics, history/trends, advanced recommendations, technician mode, report customization, multi-computer management, and business/service-center exports. Version 1.4.0 does **not** pretend payments or licensing are implemented.
+
+## Service-center workflow
+
+A technician can run diagnostics, review the score and real problems, enter optional service information, generate the SMD Service Report, and give the local report to the customer. This supports future technician and repair-shop licensing without requiring cloud accounts today.
+
+Potential legitimate revenue models are Pro licenses, technician licenses, repair-shop packages, small-business IT packages, professional report services, custom enterprise features, and IT support services powered by SMD-CHD. No deceptive monetization or credit-card collection is implemented.
+
+## Privacy, security, and safety
+
+SMD-CHD is **LOCAL-FIRST, READ-ONLY, NO TELEMETRY, NO TRACKING, NO PASSWORD COLLECTION, NO CREDENTIAL COLLECTION, NO AUTOMATIC CLOUD UPLOAD, NO REGISTRY MODIFICATION, NO DRIVER INSTALLATION, NO DISK REPAIR, and NO DESTRUCTIVE OPERATIONS**. It uses built-in Windows PowerShell/CIM/WMI and networking/security interfaces. Diagnostic access can be limited by Windows permissions or hardware support.
+
+## Testing and limitations
+
+The implementation is designed for PowerShell 5.1 syntax and defensive handling of missing battery, thermal, SMART, GPU, Defender, service, network, and CIM data. Runtime hardware validation must be performed on representative Windows 10 desktops, Windows 10 laptops, Windows 11 desktops, and Windows 11 laptops. PowerShell itself is not available in this Linux-based editing environment, so final syntax validation should be run on Windows with:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ". .\src\modules\GPU.ps1; Get-GPUHealth | Format-List"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ". .\src\SMD-CHD.ps1"
 ```
 
-The command should return `Status`, `Summary`, and `Details` without changing the system.
+Because the main script is interactive, use the application menu for functional verification. Optional Windows interfaces can return `INFO` even when hardware is healthy.
 
-## Version
+## Roadmap
 
-**Current Version**: 1.1.0  
-**Platform**: Windows 10/11  
-**PowerShell**: 5.1+
+- **Version 1.4.0:** Professional diagnostic foundation.
+- **Version 1.5:** Potential better dashboard, improved reports, more hardware diagnostics, and better service workflow.
+- **Version 2.0:** Potential SMD-CHD Pro licensing, technician accounts, multi-computer management, business management, optional cloud services, secure online features, and paid licensing. These online services are not implemented or simulated in 1.4.0.
 
----
+## Disclaimer
 
-**SMD-CHD: Professional Computer Health Diagnostics - Safe • Local • Reliable**
+SMD-CHD is an informational diagnostic aid, not a substitute for qualified technical inspection, manufacturer service procedures, backups, or professional security advice. Results depend on Windows permissions and hardware interfaces.
+
+**SMD-CHD — Safe • Local • Reliable**

@@ -1,86 +1,12 @@
 # ============================================================
-# HealthScore.ps1 - Overall System Health Score Calculation
+# HealthScore.ps1 - Transparent 0-100 score
 # ============================================================
-
 function Get-HealthScore {
-    param(
-        [Parameter(Mandatory = $true)]
-        $Results
-    )
-
-    $score = 100
-    $recommendations = @()
-
-    # Evaluate CPU status
-    if ($Results.CPU.Status -eq 'CRITICAL') {
-        $score -= 25
-        $recommendations += 'CPU usage is critically high. Close unnecessary programs.'
-    } elseif ($Results.CPU.Status -eq 'WARNING') {
-        $score -= 12
-        $recommendations += 'CPU usage is high. Consider closing heavy applications.'
-    }
-
-    # Evaluate RAM status
-    if ($Results.RAM.Status -eq 'CRITICAL') {
-        $score -= 25
-        $recommendations += 'RAM is almost full. Close programs or consider adding more memory.'
-    } elseif ($Results.RAM.Status -eq 'WARNING') {
-        $score -= 12
-        $recommendations += 'RAM usage is high. Close unused applications to free up memory.'
-    }
-
-    # Evaluate Storage status
-    if ($Results.Storage.Status -eq 'CRITICAL') {
-        $score -= 20
-        $recommendations += 'One or more drives are almost full. Free up disk space immediately.'
-    } elseif ($Results.Storage.Status -eq 'WARNING') {
-        $score -= 10
-        $recommendations += 'Storage is getting full. Clean up unnecessary files and programs.'
-    }
-
-    # Evaluate Network status
-    if ($Results.Network.Status -eq 'CRITICAL') {
-        $score -= 20
-        $recommendations += 'No internet connection detected. Check network cable/Wi-Fi and router.'
-    } elseif ($Results.Network.Status -eq 'WARNING') {
-        $score -= 8
-        $recommendations += 'Network issues detected. Check DNS settings or restart router.'
-    }
-
-    # Evaluate Security status
-    if ($Results.Security.Status -eq 'WARNING') {
-        $score -= 15
-        $recommendations += 'Real-time protection may be disabled. Enable Microsoft Defender immediately.'
-    }
-
-    # GPU is intentionally weighted conservatively so a display adapter issue does not
-    # dominate the overall computer health score.
-    if ($Results.GPU) {
-        if ($Results.GPU.Status -eq 'CRITICAL') {
-            $score -= 10
-            $recommendations += 'A GPU reports a serious device problem. Review the GPU device status and driver information.'
-        } elseif ($Results.GPU.Status -eq 'WARNING') {
-            $score -= 4
-            $recommendations += 'A GPU reports a device configuration warning. Review Windows device status.'
-        }
-    }
-
-    # Ensure score is within valid range
-    if ($score -lt 0) {
-        $score = 0
-    }
-
-    # Determine overall status
-    $status = switch ($score) {
-        { $_ -ge 90 } { 'Excellent' }
-        { $_ -ge 75 } { 'Good' }
-        { $_ -ge 50 } { 'Needs Attention' }
-        default { 'Critical' }
-    }
-
-    return [PSCustomObject]@{
-        Score = $score
-        Status = $status
-        Recommendations = $recommendations
-    }
+    param([Parameter(Mandatory=$true)]$Results)
+    $score=100; $warnings=@(); $critical=@(); $breakdown=[ordered]@{}
+    $weights=@{CPU=@{WARNING=12;CRITICAL=25};RAM=@{WARNING=12;CRITICAL=25};Storage=@{WARNING=10;CRITICAL=20};Network=@{WARNING=8;CRITICAL=20};Windows=@{WARNING=5;CRITICAL=10};Security=@{WARNING=15;CRITICAL=20};GPU=@{WARNING=4;CRITICAL=10};Battery=@{WARNING=8;CRITICAL=15};Thermal=@{WARNING=10;CRITICAL=20}}
+    foreach ($name in $weights.Keys) { $r=$Results.$name; $deduction=0; if ($r) { if ($r.Status -eq 'WARNING') {$deduction=$weights[$name].WARNING}; if ($r.Status -eq 'CRITICAL') {$deduction=$weights[$name].CRITICAL}; if ($r.Status -eq 'WARNING') {$warnings += "$name: $($r.Summary)"}; if ($r.Status -eq 'CRITICAL') {$critical += "$name: $($r.Summary)"} }; $breakdown[$name]=[PSCustomObject]@{Status=if($r){$r.Status}else{'INFO'};Deduction=$deduction}; $score-=$deduction }
+    if ($score -lt 0) {$score=0}; $status=if($score -ge 90){'Excellent'}elseif($score -ge 75){'Good'}elseif($score -ge 50){'Needs Attention'}else{'Critical'}
+    $recommendations = if (Get-Command Get-HealthRecommendations -ErrorAction SilentlyContinue) { @(Get-HealthRecommendations -Results $Results) } else { @() }
+    [PSCustomObject]@{Score=$score;Status=$status;CategoryResults=$breakdown;Warnings=$warnings;CriticalIssues=$critical;Recommendations=$recommendations;Explanation='Unavailable INFO categories receive no deduction. Deductions are applied only to WARNING or CRITICAL results.'}
 }
